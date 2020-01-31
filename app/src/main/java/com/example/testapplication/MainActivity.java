@@ -2,9 +2,6 @@ package com.example.testapplication;
 
 import android.os.Bundle;
 
-import com.example.testapplication.ui.home.HomeFragment;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
