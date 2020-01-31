@@ -169,7 +169,7 @@ public class NotificationsFragment extends Fragment {
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
             mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
             mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
-            urlLink = mEditText.getText().toString();
+            urlLink = "https://25livepub.collegenet.com/calendars/db-campus-events-db-student-org-events.rss";
         }
 
         @Override
@@ -186,9 +186,9 @@ public class NotificationsFragment extends Fragment {
                 mFeedModelList = parseFeed(inputStream);
                 return true;
             } catch (IOException e) {
-                Log.e(TAG, "Error", e);
+                Log.v("Error", e.toString());
             } catch (XmlPullParserException e) {
-                Log.e(TAG, "Error", e);
+                Log.v("Error", e.toString());
             }
             return false;
         }
@@ -198,11 +198,12 @@ public class NotificationsFragment extends Fragment {
             mSwipeLayout.setRefreshing(false);
 
             if (success) {
+                RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
                 mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
                 mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
                 mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
                 // Fill RecyclerView
-                mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+                mRecyclerView.setAdapter(feedListAdapter);
             } else {
                 Toast.makeText(getActivity(),
                         "Enter a valid Rss feed url",

@@ -1,5 +1,7 @@
 package com.example.testapplication.ui.notifications;
 
+import android.util.Log;
+
 public class RssFeedModel {
 
     public String title;
