@@ -2,6 +2,7 @@ package com.example.testapplication.ui.notifications;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Xml;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.solver.Cache;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
@@ -41,46 +43,54 @@ public class NotificationsFragment extends Fragment {
 
     private NotificationsViewModel notificationsViewModel;
     private RecyclerView mRecyclerView;
-    private EditText mEditText;
-    private Button mFetchFeedButton;
     private SwipeRefreshLayout mSwipeLayout;
-    private TextView mFeedTitleTextView;
-    private TextView mFeedLinkTextView;
-    private TextView mFeedDescriptionTextView;
+    private RecyclerView.LayoutManager recycleManager;
+    private final static String KEY = "Key";
 
-    private List<RssFeedModel> mFeedModelList;
-    private String mFeedTitle;
-    private String mFeedLink;
-    private String mFeedDescription;
+    private ArrayList<RssFeedModel> mFeedModelList = new ArrayList<RssFeedModel>();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         notificationsViewModel =
                 ViewModelProviders.of(this).get(NotificationsViewModel.class);
         View root = inflater.inflate(R.layout.fragment_notifications, container, false);
-        mRecyclerView = (RecyclerView) root.findViewById(R.id.recyclerView);
-        mEditText = (EditText) root.findViewById(R.id.rssFeedEditText);
-        mFetchFeedButton = (Button) root.findViewById(R.id.fetchFeedButton);
-        mSwipeLayout = (SwipeRefreshLayout) root.findViewById(R.id.swipeRefreshLayout);
-        mFeedTitleTextView = (TextView) root.findViewById(R.id.feedTitle);
-        mFeedDescriptionTextView = (TextView) root.findViewById(R.id.feedDescription);
-        mFeedLinkTextView = (TextView) root.findViewById(R.id.feedLink);
-
-        mFetchFeedButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new FetchFeedTask().execute((Void) null);
-            }
-        });
+        mRecyclerView = root.findViewById(R.id.recyclerView);
+        recycleManager = new LinearLayoutManager(getContext());
+        mRecyclerView.setLayoutManager(recycleManager);
+        mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+        mSwipeLayout = root.findViewById(R.id.swipeRefreshLayout);
         mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 new FetchFeedTask().execute((Void) null);
             }
         });
-
-
         return root;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(KEY, mFeedModelList);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onViewStateRestored(Bundle savedInstanceState){
+        super.onViewStateRestored(savedInstanceState);
+        if(savedInstanceState != null && savedInstanceState.containsKey(KEY)){
+            ArrayList<RssFeedModel> tempState = savedInstanceState.getParcelableArrayList(KEY);
+            if (tempState != null){
+                mFeedModelList.addAll(tempState);
+            }
+        }
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        if (mFeedModelList.size() == 0){
+            new FetchFeedTask().execute((Void) null);
+        }
     }
 
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
@@ -113,6 +123,9 @@ public class NotificationsFragment extends Fragment {
                 if (eventType == XmlPullParser.START_TAG) {
                     if(name.equalsIgnoreCase("item")) {
                         isItem = true;
+                        title = null;
+                        link = null;
+                        description = null;
                         continue;
                     }
                 }
@@ -126,8 +139,14 @@ public class NotificationsFragment extends Fragment {
 
                 if (name.equalsIgnoreCase("title")) {
                     title = result;
+                    /*xmlPullParser.nextTag();
+                    name = "link";
+                    result = xmlPullParser.getText();*/
                 } else if (name.equalsIgnoreCase("link")) {
                     link = result;
+                    /*name = "description";
+                    result = xmlPullParser.getText();
+                    xmlPullParser.nextTag();*/
                 } else if (name.equalsIgnoreCase("description")) {
                     description = result;
                 }
@@ -137,15 +156,6 @@ public class NotificationsFragment extends Fragment {
                         RssFeedModel item = new RssFeedModel(title, link, description);
                         items.add(item);
                     }
-                    else {
-                        mFeedTitle = title;
-                        mFeedLink = link;
-                        mFeedDescription = description;
-                    }
-
-                    title = null;
-                    link = null;
-                    description = null;
                     isItem = false;
                 }
             }
@@ -163,12 +173,6 @@ public class NotificationsFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             mSwipeLayout.setRefreshing(true);
-            mFeedTitle = null;
-            mFeedLink = null;
-            mFeedDescription = null;
-            mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
-            mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-            mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
             urlLink = "https://25livepub.collegenet.com/calendars/db-campus-events-db-student-org-events.rss";
         }
 
@@ -183,7 +187,7 @@ public class NotificationsFragment extends Fragment {
 
                 URL url = new URL(urlLink);
                 InputStream inputStream = url.openConnection().getInputStream();
-                mFeedModelList = parseFeed(inputStream);
+                mFeedModelList = (ArrayList) parseFeed(inputStream);
                 return true;
             } catch (IOException e) {
                 Log.v("Error", e.toString());
@@ -199,15 +203,10 @@ public class NotificationsFragment extends Fragment {
 
             if (success) {
                 RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
-                mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-                mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
-                // Fill RecyclerView
                 mRecyclerView.setAdapter(feedListAdapter);
             } else {
                 Toast.makeText(getActivity(),
-                        "Enter a valid Rss feed url",
-                        Toast.LENGTH_LONG).show();
+                        "Enter a valid Rss feed url", Toast.LENGTH_LONG).show();
             }
         }
     }

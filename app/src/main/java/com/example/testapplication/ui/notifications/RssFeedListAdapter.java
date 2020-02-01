@@ -1,5 +1,7 @@
 package com.example.testapplication.ui.notifications;
 
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,9 +43,9 @@ public class RssFeedListAdapter
     @Override
     public void onBindViewHolder(FeedModelViewHolder holder, int position) {
         final RssFeedModel rssFeedModel = mRssFeedModels.get(position);
-        ((TextView)holder.rssFeedView.findViewById(R.id.titleText)).setText(rssFeedModel.title);
-        ((TextView)holder.rssFeedView.findViewById(R.id.descriptionText)).setText(rssFeedModel.description);
-        ((TextView)holder.rssFeedView.findViewById(R.id.linkText)).setText(rssFeedModel.link);
+        ((TextView)holder.rssFeedView.findViewById(R.id.titleText)).setText(Html.fromHtml(rssFeedModel.title));
+        ((TextView)holder.rssFeedView.findViewById(R.id.descriptionText)).setText(Html.fromHtml(rssFeedModel.description.replace("<br/><br/>", "<br/>")));
+        ((TextView)holder.rssFeedView.findViewById(R.id.linkText)).setText(Html.fromHtml(rssFeedModel.link));
     }
 
     @Override
