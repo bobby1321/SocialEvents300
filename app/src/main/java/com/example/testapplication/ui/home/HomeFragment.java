@@ -46,8 +46,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback{
                 //textView.setText(s);
             }
         });
-        mapView = (MapView) root.findViewById(R.id.mapview);
-        fab = (FloatingActionButton) root.findViewById(R.id.floatingActionButton);
+        mapView = root.findViewById(R.id.mapview);
+        fab = root.findViewById(R.id.floatingActionButton);
         fab.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){

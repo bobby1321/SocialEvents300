@@ -97,6 +97,7 @@ public class NotificationsFragment extends Fragment {
         String title = null;
         String link = null;
         String description = null;
+        String timestamp = null;
         boolean isItem = false;
         List<RssFeedModel> items = new ArrayList<>();
 
@@ -139,21 +140,17 @@ public class NotificationsFragment extends Fragment {
 
                 if (name.equalsIgnoreCase("title")) {
                     title = result;
-                    /*xmlPullParser.nextTag();
-                    name = "link";
-                    result = xmlPullParser.getText();*/
                 } else if (name.equalsIgnoreCase("link")) {
                     link = result;
-                    /*name = "description";
-                    result = xmlPullParser.getText();
-                    xmlPullParser.nextTag();*/
                 } else if (name.equalsIgnoreCase("description")) {
                     description = result;
+                } else if (name.equalsIgnoreCase("pubdate")) {
+                    timestamp = result;
                 }
 
                 if (title != null && link != null && description != null) {
                     if(isItem) {
-                        RssFeedModel item = new RssFeedModel(title, link, description);
+                        RssFeedModel item = new RssFeedModel(title, link, description, timestamp);
                         items.add(item);
                     }
                     isItem = false;
