@@ -203,7 +203,7 @@ public class NotificationsFragment extends Fragment {
                 mRecyclerView.setAdapter(feedListAdapter);
             } else {
                 Toast.makeText(getActivity(),
-                        "Enter a valid Rss feed url", Toast.LENGTH_LONG).show();
+                        "Failed to gather RSS Feed", Toast.LENGTH_LONG).show();
             }
         }
     }
