@@ -26,23 +26,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback{
 
-    private MapViewFragment mapViewFragment;
     private MapView mapView;
     private GoogleMap googleMap;
     private FloatingActionButton fab;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        mapViewFragment =
-                ViewModelProviders.of(this).get(MapViewFragment.class);
         View root = inflater.inflate(R.layout.fragment_map, container, false);
-        //final TextView textView = root.findViewById(R.id.text_home);
-        mapViewFragment.getText().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                //textView.setText(s);
-            }
-        });
         mapView = root.findViewById(R.id.mapview);
         fab = root.findViewById(R.id.floatingActionButton);
         fab.setOnClickListener(new View.OnClickListener(){

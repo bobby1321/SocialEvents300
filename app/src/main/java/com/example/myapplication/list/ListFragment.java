@@ -40,8 +40,7 @@ public class ListFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        listViewModel =
-                ViewModelProviders.of(this).get(ListViewModel.class);
+        listViewModel = ViewModelProviders.of(this).get(ListViewModel.class);
         View root = inflater.inflate(R.layout.fragment_list, container, false);
         mRecyclerView = root.findViewById(R.id.recyclerView);
         recycleManager = new LinearLayoutManager(getContext());
