@@ -30,8 +30,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     private GoogleMap googleMap;
     private FloatingActionButton fab;
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_map, container, false);
         mapView = root.findViewById(R.id.mapview);
         fab = root.findViewById(R.id.floatingActionButton);
@@ -42,7 +41,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
             };
         });
         mapView.onCreate(savedInstanceState);
-
 
         mapView.getMapAsync(this);
         return root;
