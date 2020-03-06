@@ -37,6 +37,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.security.AccessController.getContext;
+
 public class ListFragment extends Fragment {
 
     private RecyclerView mRecyclerView;
