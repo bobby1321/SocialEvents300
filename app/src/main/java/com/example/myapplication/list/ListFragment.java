@@ -113,7 +113,7 @@ public class ListFragment extends Fragment {
                         public void onResponse(String response) {
                             try{
                                 JSONArray jboy = new JSONArray(response);
-                                for (int i = 0; i < jboy.length(); i++){
+                                for (int i = 0; i < jboy.length(); i++) {
                                     JSONObject jOb = jboy.getJSONObject(i);
                                     RssFeedModel temp = new RssFeedModel(
                                             jOb.getString("title"),
@@ -125,8 +125,6 @@ public class ListFragment extends Fragment {
                                     );
                                     mFeedModelList.add(temp);
                                 }
-                                RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                                mRecyclerView.setAdapter(feedListAdapter);
                             } catch (Exception e){
                                 Log.d("Error", e.toString());
                             }
@@ -137,8 +135,42 @@ public class ListFragment extends Fragment {
                     Log.e("Error", error.toString());
                 }
             });
+            RSSFeedModelListOrganizer();
+            putArrayListIntoRecyclerView();
             queue.add(stringRequest);
             return true;
+        }
+
+        protected void RSSFeedModelListOrganizer(){
+            ArrayList<RssFeedModel> tempList = new ArrayList<RssFeedModel>();
+            int i = mFeedModelList.size();
+            int j=0, k=4;
+            String secondsmark = ":00 ";
+            String temp, timestamp1, timestamp2;
+            char parse1,parse2;
+            while(true) {
+                temp = mFeedModelList.get(i).getTimestamp().substring(j, k);
+                if (temp.equals(secondsmark)) {
+                    timestamp1 = mFeedModelList.get(i).getTimestamp().substring(j - 5, k);
+                    break;
+                } else
+                    j++; k++;
+            }
+            while(i>0) {
+                timestamp2 = mFeedModelList.get(i-1).getTimestamp().substring(j, k);
+                if(timestamp1.compareTo(timestamp2) > 0)
+                    tempList.add(mFeedModelList.get(i));
+                else
+                    tempList.add(i-1,mFeedModelList.get(i));
+                i--;
+            }
+            //orrrr we could have it find the earliest time, add that object, then add the rest behind it
+            mFeedModelList = tempList;
+        }
+
+        protected void putArrayListIntoRecyclerView(){
+            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+            mRecyclerView.setAdapter(feedListAdapter);
         }
 
         @Override
@@ -153,5 +185,6 @@ public class ListFragment extends Fragment {
                         "Enter a valid Rss feed url", Toast.LENGTH_LONG).show();
             }
         }
+
     }
 }
