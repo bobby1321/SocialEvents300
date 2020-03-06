@@ -10,6 +10,7 @@ public class RssFeedModel implements Parcelable {
     private String description;
     private String timestamp;
     private String organization;
+    private String location;
 
     public static final Creator CREATOR = new Creator() {
         public RssFeedModel createFromParcel(Parcel in) {
@@ -30,6 +31,15 @@ public class RssFeedModel implements Parcelable {
         if (loc != -1){
             organization = description.substring(loc + 26);
         }
+    }
+
+    public RssFeedModel(String title, String description, String timestamp, String organization, String location, String link) {
+        this.title = title;
+        this.link = link;
+        this.description = description;
+        this.timestamp = timestamp;
+        this.organization = organization;
+        this.location = location;
     }
 
     public RssFeedModel(Parcel p){

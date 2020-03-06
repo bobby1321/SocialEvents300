@@ -17,8 +17,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -79,105 +88,55 @@ public class ListFragment extends Fragment {
         }
     }
 
-    public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
-        String title = null;
-        String link = null;
-        String description = null;
-        String timestamp = null;
-        boolean isItem = false;
-        List<RssFeedModel> items = new ArrayList<>();
 
-        try {
-            XmlPullParser xmlPullParser = Xml.newPullParser();
-            xmlPullParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            xmlPullParser.setInput(inputStream, null);
-
-            xmlPullParser.nextTag();
-            while (xmlPullParser.next() != XmlPullParser.END_DOCUMENT) {
-                int eventType = xmlPullParser.getEventType();
-
-                String name = xmlPullParser.getName();
-                if(name == null)
-                    continue;
-
-                if(eventType == XmlPullParser.END_TAG) {
-                    if(name.equalsIgnoreCase("item")) {
-                        isItem = false;
-                    }
-                    continue;
-                }
-
-                if (eventType == XmlPullParser.START_TAG) {
-                    if(name.equalsIgnoreCase("item")) {
-                        isItem = true;
-                        title = null;
-                        link = null;
-                        description = null;
-                        continue;
-                    }
-                }
-
-                Log.d("MainActivity", "Parsing name ==> " + name);
-                String result = "";
-                if (xmlPullParser.next() == XmlPullParser.TEXT) {
-                    result = xmlPullParser.getText();
-                    xmlPullParser.nextTag();
-                }
-
-                if (name.equalsIgnoreCase("title")) {
-                    title = result;
-                } else if (name.equalsIgnoreCase("link")) {
-                    link = result;
-                } else if (name.equalsIgnoreCase("description")) {
-                    description = result;
-                } else if (name.equalsIgnoreCase("pubdate")) {
-                    timestamp = result;
-                }
-
-                if (title != null && link != null && description != null) {
-                    if(isItem) {
-                        RssFeedModel item = new RssFeedModel(title, link, description, timestamp);
-                        items.add(item);
-                    }
-                    isItem = false;
-                }
-            }
-
-            return items;
-        } finally {
-            inputStream.close();
-        }
-    }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
-        private String urlLink;
+        final RequestQueue queue = Volley.newRequestQueue(getContext());
+        final String url ="http://pages.erau.edu/~apelianr/event_array.php";
 
         @Override
         protected void onPreExecute() {
             mSwipeLayout.setRefreshing(true);
-            urlLink = "https://25livepub.collegenet.com/calendars/db-campus-events-db-student-org-events.rss";
         }
 
         @Override
         protected Boolean doInBackground(Void... voids) {
-            if (TextUtils.isEmpty(urlLink))
+            if (TextUtils.isEmpty(url))
                 return false;
 
-            try {
-                if(!urlLink.startsWith("http://") && !urlLink.startsWith("https://"))
-                    urlLink = "http://" + urlLink;
-
-                URL url = new URL(urlLink);
-                InputStream inputStream = url.openConnection().getInputStream();
-                mFeedModelList = (ArrayList) parseFeed(inputStream);
-                return true;
-            } catch (IOException e) {
-                Log.v("Error", e.toString());
-            } catch (XmlPullParserException e) {
-                Log.v("Error", e.toString());
-            }
-            return false;
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try{
+                                JSONArray jboy = new JSONArray(response);
+                                for (int i = 0; i < jboy.length(); i++){
+                                    JSONObject jOb = jboy.getJSONObject(i);
+                                    RssFeedModel temp = new RssFeedModel(
+                                            jOb.getString("title"),
+                                            jOb.getString("description"),
+                                            jOb.getString("timestamp"),
+                                            jOb.getString("organization"),
+                                            jOb.getString("location"),
+                                            jOb.getString("link")
+                                    );
+                                    mFeedModelList.add(temp);
+                                }
+                                RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                                mRecyclerView.setAdapter(feedListAdapter);
+                            } catch (Exception e){
+                                Log.d("Error", e.toString());
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.e("Error", error.toString());
+                }
+            });
+            queue.add(stringRequest);
+            return true;
         }
 
         @Override
