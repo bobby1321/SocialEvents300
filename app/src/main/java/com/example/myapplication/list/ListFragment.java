@@ -93,6 +93,7 @@ public class ListFragment extends Fragment {
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     response -> {
                         try{
+                            mFeedModelList = new ArrayList<RssFeedModel>();
                             JSONArray jArray = new JSONArray(response);
                             for (int i = 0; i < jArray.length(); i++){
                                 JSONObject jOb = jArray.getJSONObject(i);
@@ -110,8 +111,7 @@ public class ListFragment extends Fragment {
                             mRecyclerView.setAdapter(feedListAdapter);
                         } catch (Exception e){
                             Log.d("Error", e.toString());
-                            Snackbar snackBar = Snackbar.make(mRecyclerView, "Sorry, we're having some trouble connecting to the server. Please pull down to refresh, or check your internet connection.", Snackbar.LENGTH_LONG);
-                            snackBar.show();
+                            Toast.makeText(getActivity(), R.string.snackbar_text, Toast.LENGTH_LONG).show();
                         }
                     }, error -> Log.e("Error", error.toString()));
             queue.add(stringRequest);

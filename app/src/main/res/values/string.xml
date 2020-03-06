@@ -3,4 +3,5 @@
     <string name="title_map">Map</string>
     <string name="title_ar">AR View</string>
     <string name="title_list">List</string>
+    <string name="snackbar_text">"Sorry, we're having some trouble connecting to the server. Please pull down to refresh, or check your internet connection."</string>
 </resources>
