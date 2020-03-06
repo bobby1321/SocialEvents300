@@ -9,14 +9,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -25,19 +24,10 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
-
+import com.google.android.material.snackbar.Snackbar;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-
-import static java.security.AccessController.getContext;
 
 public class ListFragment extends Fragment {
 
@@ -56,12 +46,7 @@ public class ListFragment extends Fragment {
         mRecyclerView.setLayoutManager(recycleManager);
         mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
         mSwipeLayout = root.findViewById(R.id.swipeRefreshLayout);
-        mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                new FetchFeedTask().execute((Void) null);
-            }
-        });
+        mSwipeLayout.setOnRefreshListener(() -> new FetchFeedTask().execute((Void) null));
         return root;
     }
 
@@ -90,8 +75,6 @@ public class ListFragment extends Fragment {
         }
     }
 
-
-
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
         final RequestQueue queue = Volley.newRequestQueue(getContext());
@@ -108,35 +91,29 @@ public class ListFragment extends Fragment {
                 return false;
 
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            try{
-                                JSONArray jboy = new JSONArray(response);
-                                for (int i = 0; i < jboy.length(); i++){
-                                    JSONObject jOb = jboy.getJSONObject(i);
-                                    RssFeedModel temp = new RssFeedModel(
-                                            jOb.getString("title"),
-                                            jOb.getString("description"),
-                                            jOb.getString("timestamp"),
-                                            jOb.getString("organization"),
-                                            jOb.getString("location"),
-                                            jOb.getString("link")
-                                    );
-                                    mFeedModelList.add(temp);
-                                }
-                                RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                                mRecyclerView.setAdapter(feedListAdapter);
-                            } catch (Exception e){
-                                Log.d("Error", e.toString());
+                    response -> {
+                        try{
+                            JSONArray jArray = new JSONArray(response);
+                            for (int i = 0; i < jArray.length(); i++){
+                                JSONObject jOb = jArray.getJSONObject(i);
+                                RssFeedModel temp = new RssFeedModel(
+                                        jOb.getString("title"),
+                                        jOb.getString("description"),
+                                        jOb.getString("timestamp"),
+                                        jOb.getString("organization"),
+                                        jOb.getString("location"),
+                                        jOb.getString("link")
+                                );
+                                mFeedModelList.add(temp);
                             }
+                            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                            mRecyclerView.setAdapter(feedListAdapter);
+                        } catch (Exception e){
+                            Log.d("Error", e.toString());
+                            Snackbar snackBar = Snackbar.make(mRecyclerView, "Sorry, we're having some trouble connecting to the server. Please pull down to refresh, or check your internet connection.", Snackbar.LENGTH_LONG);
+                            snackBar.show();
                         }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.e("Error", error.toString());
-                }
-            });
+                    }, error -> Log.e("Error", error.toString()));
             queue.add(stringRequest);
             return true;
         }
