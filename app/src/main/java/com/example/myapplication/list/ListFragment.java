@@ -57,6 +57,7 @@ public class ListFragment extends Fragment {
     private final static String KEY = "Key";
     private FloatingActionButton fab;
     private ArrayList<String> ORGS = new ArrayList<String>();
+    private ArrayList<String> LOCS = new ArrayList<String>();
     private boolean filtered= false;
 
     private ArrayList<RssFeedModel> mFeedModelList = new ArrayList<RssFeedModel>();
@@ -203,7 +204,12 @@ public class ListFragment extends Fragment {
 
                     }
                     case 3:{
-
+                        String[] temp = LOCS.toArray(new String[ORGS.size()]);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
+                                android.R.layout.simple_dropdown_item_1line, temp);
+                        views[0] = new AutoCompleteTextView(getContext());
+                        ((AutoCompleteTextView)views[0]).setAdapter(adapter);
+                        layout.addView(views[0]);
                     }
                 }
             }
@@ -250,6 +256,13 @@ public class ListFragment extends Fragment {
             }
             case 1:{
                 url ="http://pages.erau.edu/~apelianr/org_search.php?org=" + param;
+                break;
+            }
+            case 2:{
+
+            }
+            case 3:{
+                url ="http://pages.erau.edu/~apelianr/loc_search.php?loc=" + param;
                 break;
             }
         }
@@ -315,6 +328,9 @@ public class ListFragment extends Fragment {
                                 mFeedModelList.add(temp);
                                 if (!ORGS.contains(jOb.getString("organization"))){
                                     ORGS.add(jOb.getString("organization"));
+                                }
+                                if (!LOCS.contains(jOb.getString("location"))){
+                                    LOCS.add(jOb.getString("location"));
                                 }
                             }
                             RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
