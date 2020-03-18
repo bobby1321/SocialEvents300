@@ -54,7 +54,6 @@ public class ListFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeLayout;
     private RecyclerView.LayoutManager recycleManager;
-    private final static String KEY = "Key";
     private FloatingActionButton fab;
     private ArrayList<String> ORGS = new ArrayList<String>();
     private ArrayList<String> LOCS = new ArrayList<String>();
@@ -219,23 +218,6 @@ public class ListFragment extends Fragment {
             }
         });
         alertDialog.show();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelableArrayList(KEY, mFeedModelList);
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onViewStateRestored(Bundle savedInstanceState){
-        super.onViewStateRestored(savedInstanceState);
-        if(savedInstanceState != null && savedInstanceState.containsKey(KEY)){
-            ArrayList<RssFeedModel> tempState = savedInstanceState.getParcelableArrayList(KEY);
-            if (tempState != null){
-                mFeedModelList.addAll(tempState);
-            }
-        }
     }
 
     @Override
