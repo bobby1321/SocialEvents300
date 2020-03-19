@@ -26,6 +26,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -57,17 +58,19 @@ public class ListFragment extends Fragment {
     private FloatingActionButton fab;
     private ArrayList<String> ORGS = new ArrayList<String>();
     private ArrayList<String> LOCS = new ArrayList<String>();
-    private boolean filtered= false;
+    private RssFeedListAdapter rssFeedListAdapter;
+    private boolean filtered = false;
 
     private ArrayList<RssFeedModel> mFeedModelList = new ArrayList<RssFeedModel>();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_list, container, false);
+        rssFeedListAdapter = new RssFeedListAdapter(mFeedModelList);
         mRecyclerView = root.findViewById(R.id.recyclerView);
         recycleManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(recycleManager);
-        mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+        mRecyclerView.setAdapter(rssFeedListAdapter);
         mSwipeLayout = root.findViewById(R.id.swipeRefreshLayout);
         mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -112,112 +115,9 @@ public class ListFragment extends Fragment {
     }
 
     private void openFilterAction(View root) {
-        NoDefaultSpinner spinner = new NoDefaultSpinner(getContext());
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
-                R.array.filter_array, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setPrompt("Select a filter option...");
-
-        LinearLayout layout = new LinearLayout(getActivity());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.addView(spinner);
-
-        final View[] views = new View[1];
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Filter Events");
-        builder.setView(layout);
-        builder.setPositiveButton("Filter", new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                int pos = spinner.getSelectedItemPosition();
-                Log.d("URL","Help");
-                switch (pos){
-                    case -1:{
-                        //fuck you how did you even do that
-                        Log.d("URL", "Oh poop");
-                        break;
-                    }
-                    case 0:{
-                        FetchQuery(0, ((TextView)views[0]).getText().toString());
-                        break;
-                    }
-                    case 1:{
-                        FetchQuery(1, ((TextView)views[0]).getText().toString());
-                        break;
-                    }
-
-                }
-                filtered = true;
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                dialog.cancel();
-            }
-        });
-        AlertDialog alertDialog = builder.create();
-
-        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialog) {
-                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-            }
-        });
-
-
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (views[0] != null){
-                    layout.removeView(views[0]);
-                    views[0] = null;
-                }
-                if (position != -1){
-                    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                }
-                switch (position){
-                    case 0:{
-                        views[0] = new EditText(getActivity());
-                        ((TextView)views[0]).setRawInputType(InputType.TYPE_CLASS_TEXT);
-                        ((TextView)views[0]).setHint("Event Name");
-                        layout.addView(views[0]);
-                        break;
-                    }
-                    case 1:{
-                        String[] temp = ORGS.toArray(new String[ORGS.size()]);
-                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
-                                android.R.layout.simple_dropdown_item_1line, temp);
-                        views[0] = new AutoCompleteTextView(getContext());
-                        ((AutoCompleteTextView)views[0]).setAdapter(adapter);
-                        layout.addView(views[0]);
-                        break;
-                    }
-                    case 2:{
-
-                    }
-                    case 3:{
-                        String[] temp = LOCS.toArray(new String[ORGS.size()]);
-                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
-                                android.R.layout.simple_dropdown_item_1line, temp);
-                        views[0] = new AutoCompleteTextView(getContext());
-                        ((AutoCompleteTextView)views[0]).setAdapter(adapter);
-                        layout.addView(views[0]);
-                    }
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-        alertDialog.show();
+        FilterFragment filterFragment = new FilterFragment(mFeedModelList, ORGS, LOCS, rssFeedListAdapter);
+        FragmentManager fm = getActivity().getSupportFragmentManager();
+        filterFragment.show(fm, "filterFragment");
     }
 
     @Override
@@ -226,53 +126,6 @@ public class ListFragment extends Fragment {
         if (mFeedModelList.size() == 0){
             new FetchFeedTask().execute((Void) null);
         }
-    }
-
-    public void FetchQuery(int type, String param){
-        RequestQueue queue = Volley.newRequestQueue(getContext());
-        String url = "ahhhh";
-        switch (type){
-            case 0:{
-                url ="http://pages.erau.edu/~apelianr/name_search.php?name=" + param;
-                break;
-            }
-            case 1:{
-                url ="http://pages.erau.edu/~apelianr/org_search.php?org=" + param;
-                break;
-            }
-            case 2:{
-
-            }
-            case 3:{
-                url ="http://pages.erau.edu/~apelianr/loc_search.php?loc=" + param;
-                break;
-            }
-        }
-        mFeedModelList.clear();
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                response -> {
-                    try{
-                        mFeedModelList = new ArrayList<RssFeedModel>();
-                        JSONArray jArray = new JSONArray(response);
-                        for (int i = 0; i < jArray.length(); i++){
-                            JSONObject jOb = jArray.getJSONObject(i);
-                            RssFeedModel temp = new RssFeedModel(
-                                    jOb.getString("title"),
-                                    jOb.getString("description"),
-                                    jOb.getString("timestamp"),
-                                    jOb.getString("organization"),
-                                    jOb.getString("location"),
-                                    jOb.getString("link")
-                            );
-                            mFeedModelList.add(temp);
-                        }
-                        RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                        mRecyclerView.setAdapter(feedListAdapter);
-                    } catch (Exception e){
-                        Log.d("Error", e.toString());
-                    }
-                }, error -> Log.e("Error", error.toString()));
-        queue.add(stringRequest);
     }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
@@ -295,7 +148,6 @@ public class ListFragment extends Fragment {
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     response -> {
                         try{
-                            mFeedModelList = new ArrayList<RssFeedModel>();
                             JSONArray jArray = new JSONArray(response);
                             for (int i = 0; i < jArray.length(); i++){
                                 JSONObject jOb = jArray.getJSONObject(i);
@@ -315,13 +167,12 @@ public class ListFragment extends Fragment {
                                     LOCS.add(jOb.getString("location"));
                                 }
                             }
-                            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                            mRecyclerView.setAdapter(feedListAdapter);
+                            rssFeedListAdapter.updateList(mFeedModelList);
                         } catch (Exception e){
                             Log.d("Error", e.toString());
                             Toast.makeText(getActivity(), R.string.snackbar_text, Toast.LENGTH_SHORT).show();
                         }
-                    }, error -> Log.e("Error", error.toString()));
+                    }, error -> {Log.e("Error", error.toString()); Toast.makeText(getActivity(), R.string.snackbar_text, Toast.LENGTH_SHORT).show();});
             queue.add(stringRequest);
             return true;
         }
@@ -335,7 +186,7 @@ public class ListFragment extends Fragment {
                 mRecyclerView.setAdapter(feedListAdapter);
             } else {
                 Toast.makeText(getActivity(),
-                        "Enter a valid Rss feed url", Toast.LENGTH_LONG).show();
+                        "Something went terribly wrong.", Toast.LENGTH_LONG).show();
             }
         }
     }

@@ -13,14 +13,17 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -37,23 +40,29 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-public class FilterFragment extends Fragment {
+public class FilterFragment extends DialogFragment {
 
     private LinearLayout linearLayout;
     private ArrayList<RssFeedModel> rssFeedModels;
     private ArrayList<String> ORGS, LOCS;
+    private Button buttonCancel, buttonFilter;
+    private RssFeedListAdapter rssFeedListAdapter;
     private boolean filtered = false;
 
-    public FilterFragment(ArrayList<RssFeedModel> arraylist, ArrayList<String> orgs, ArrayList<String> locs){
+    public FilterFragment(ArrayList<RssFeedModel> arraylist, ArrayList<String> orgs, ArrayList<String> locs, RssFeedListAdapter adapter){
         this.rssFeedModels = arraylist;
         this.ORGS = orgs;
         this.LOCS = locs;
+        this.rssFeedListAdapter = adapter;
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_filter, container, false);
         linearLayout = root.findViewById(R.id.linearLayout);
+        buttonCancel = root.findViewById(R.id.buttonCancel);
+        buttonFilter = root.findViewById(R.id.buttonFilter);
+        buttonFilter.setEnabled(false);
 
         FilterFragment.NoDefaultSpinner spinner = new FilterFragment.NoDefaultSpinner(getContext());
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
@@ -61,20 +70,15 @@ public class FilterFragment extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setPrompt("Select a filter option...");
+        spinner.setMinimumWidth(1000);
 
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.addView(spinner);
 
         final View[] views = new View[1];
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Filter Events");
-        builder.setView(linearLayout);
-        builder.setPositiveButton("Filter", new DialogInterface.OnClickListener()
-        {
+        buttonFilter.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
+            public void onClick(View v) {
                 int pos = spinner.getSelectedItemPosition();
                 Log.d("URL","Help");
                 switch (pos){
@@ -91,28 +95,21 @@ public class FilterFragment extends Fragment {
                         FetchQuery(1, ((TextView)views[0]).getText().toString());
                         break;
                     }
-
+                    case 3:{
+                        FetchQuery(3, ((TextView)views[0]).getText().toString());
+                    }
                 }
                 filtered = true;
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                dialog.cancel();
-            }
-        });
-        AlertDialog alertDialog = builder.create();
-
-        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialog) {
-                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                dismiss();
             }
         });
 
+        buttonCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -122,7 +119,7 @@ public class FilterFragment extends Fragment {
                     views[0] = null;
                 }
                 if (position != -1){
-                    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                    buttonFilter.setEnabled(true);
                 }
                 switch (position){
                     case 0:{
@@ -163,6 +160,10 @@ public class FilterFragment extends Fragment {
         return root;
     }
 
+    public boolean getFiltered(){
+        return filtered;
+    }
+
     public void FetchQuery(int type, String param){
         RequestQueue queue = Volley.newRequestQueue(getContext());
         String url = "ahhhh";
@@ -189,7 +190,6 @@ public class FilterFragment extends Fragment {
                     @Override
                     public void onResponse(String response) {
                     try{
-                        rssFeedModels = new ArrayList<RssFeedModel>();
                         JSONArray jArray = new JSONArray(response);
                         for (int i = 0; i < jArray.length(); i++){
                             JSONObject jOb = jArray.getJSONObject(i);
@@ -202,7 +202,9 @@ public class FilterFragment extends Fragment {
                                     jOb.getString("link")
                             );
                             rssFeedModels.add(temp);
+                            Log.d("List", temp.toString());
                         }
+                        rssFeedListAdapter.updateList(rssFeedModels);
                     } catch (Exception e){
                         Log.d("Error", e.toString());
                     }
@@ -211,7 +213,9 @@ public class FilterFragment extends Fragment {
             public void onErrorResponse(VolleyError error) {
                 Log.e("Error", error.toString());
             }});
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(20000, 15, 1.0f));
         queue.add(stringRequest);
+
     }
 
     public class NoDefaultSpinner extends androidx.appcompat.widget.AppCompatSpinner {

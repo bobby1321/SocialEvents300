@@ -62,6 +62,11 @@ public class RssFeedModel implements Parcelable {
         dest.writeString(timestamp);
     }
 
+    public String toString() {
+        String string = title + " // " +  organization + " // " + location + " // " + timestamp.toString();
+        return string;
+    }
+
     public String getTitle() {
         return title;
     }
