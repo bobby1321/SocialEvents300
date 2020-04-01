@@ -63,7 +63,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         nameText.setInputType(InputType.TYPE_CLASS_TEXT);
         nameText.setHint("Marker Name");
 
-
         LinearLayout layout = new LinearLayout(getActivity());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.addView(latText);
@@ -105,6 +104,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
                 .title("" + name + "(" + lat + ", " + lng + ")"));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(tempPoint));
     }
+
     @Override
     public void onResume() {
         if (mapView != null){
@@ -132,7 +132,4 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         if (mapView != null){
         mapView.onLowMemory();}
     }
-
-
-
 }

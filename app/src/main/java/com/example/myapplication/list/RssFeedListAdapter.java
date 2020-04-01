@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RssFeedListAdapter
@@ -50,5 +51,10 @@ public class RssFeedListAdapter
     @Override
     public int getItemCount() {
         return mRssFeedModels.size();
+    }
+
+    public void updateList(ArrayList<RssFeedModel> newArraylist){
+        this.mRssFeedModels = newArraylist;
+        notifyDataSetChanged();
     }
 }
