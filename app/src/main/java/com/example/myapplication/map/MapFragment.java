@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,16 +20,20 @@ import androidx.lifecycle.ViewModelProviders;
 
 
 import com.example.myapplication.R;
+import com.example.myapplication.list.RssFeedModel;
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback{
 
     private MapView mapView;
     private GoogleMap googleMap;
     private FloatingActionButton fab;
+    private ArrayList<RssFeedModel> rssFeedModels;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_map, container, false);
@@ -41,14 +46,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
             };
         });
         mapView.onCreate(savedInstanceState);
-
         mapView.getMapAsync(this);
+        try{
+            rssFeedModels = (ArrayList<RssFeedModel>)getArguments().getSerializable("key");
+        } catch (Exception e) {
+        }
         return root;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
+        addMarkers();
         googleMap.moveCamera( CameraUpdateFactory.newLatLngZoom(new LatLng(29.189999, -81.048228) , 16.0f) );
     }
 
@@ -102,13 +111,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     public void addMarker(double lat, double lng, String name){
         LatLng tempPoint = new LatLng(lat, lng);
         googleMap.addMarker(new MarkerOptions().position(tempPoint)
-                .title("" + name + "(" + lat + ", " + lng + ")"));
+                .title(name));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(tempPoint));
     }
+
+    public void addMarkers(){
+        try{
+            Bundle args = getArguments();
+            Log.d("Map", "" + args);
+            rssFeedModels = new ArrayList<RssFeedModel>();
+            //rssFeedModels = (ArrayList<RssFeedModel>)args.getSerializable("key");
+        } catch (Exception e) {
+            Log.d("Map", "" + e.getMessage());
+            rssFeedModels = new ArrayList<RssFeedModel>();
+        }
+        for (RssFeedModel r : rssFeedModels){
+            addMarker(r.getLatitude(), r.getLongitude(), r.getTitle());
+            Log.d("Map", r.getTitle());
+        }
+    }
+
     @Override
     public void onResume() {
-        if (mapView != null){
-        mapView.onResume();}
+        if (mapView != null) {
+            mapView.onResume();}
         super.onResume();
     }
 

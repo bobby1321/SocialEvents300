@@ -261,6 +261,8 @@ public class ListFragment extends Fragment {
                                     jOb.getString("timestamp"),
                                     jOb.getString("organization"),
                                     jOb.getString("location"),
+                                    Double.parseDouble(jOb.getString("latitude")),
+                                    Double.parseDouble(jOb.getString("longitude")),
                                     jOb.getString("link")
                             );
                             mFeedModelList.add(temp);
@@ -271,24 +273,8 @@ public class ListFragment extends Fragment {
                         Log.d("Error", e.toString());
                     }
                 }, error -> Log.e("Error", error.toString()));
+        passTheList(mFeedModelList);
         queue.add(stringRequest);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelableArrayList(KEY, mFeedModelList);
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onViewStateRestored(Bundle savedInstanceState){
-        super.onViewStateRestored(savedInstanceState);
-        if(savedInstanceState != null && savedInstanceState.containsKey(KEY)){
-            ArrayList<RssFeedModel> tempState = savedInstanceState.getParcelableArrayList(KEY);
-            if (tempState != null){
-                mFeedModelList.addAll(tempState);
-            }
-        }
     }
 
     @Override
@@ -297,6 +283,12 @@ public class ListFragment extends Fragment {
         if (mFeedModelList.size() == 0){
             new FetchFeedTask().execute((Void) null);
         }
+    }
+
+    public void passTheList(ArrayList<RssFeedModel> list){
+        Bundle bundle = new Bundle();
+        bundle.putString("", mFeedModelList.toString());
+        Log.d("Map", "Bundle");
     }
 
     public class NoDefaultSpinner extends androidx.appcompat.widget.AppCompatSpinner {
@@ -421,6 +413,8 @@ public class ListFragment extends Fragment {
                                             jOb.getString("timestamp"),
                                             jOb.getString("organization"),
                                             jOb.getString("location"),
+                                            Double.parseDouble(jOb.getString("latitude")),
+                                            Double.parseDouble(jOb.getString("longitude")),
                                             jOb.getString("link")
                                     );
                                     mFeedModelList.add(temp);
@@ -429,7 +423,6 @@ public class ListFragment extends Fragment {
                                     }if (!LOCS.contains(jOb.getString("location"))){
                                         LOCS.add(jOb.getString("location"));
                                     }
-
                                 }
                             } catch (Exception e){
                                 Log.d("Error", e.toString());
@@ -444,6 +437,7 @@ public class ListFragment extends Fragment {
             });
             //RSSFeedModelListOrganizer();
             //putArrayListIntoRecyclerView();
+            passTheList(mFeedModelList);
             queue.add(stringRequest);
             return true;
         }

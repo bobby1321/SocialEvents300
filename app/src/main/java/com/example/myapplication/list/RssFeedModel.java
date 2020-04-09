@@ -3,7 +3,9 @@ package com.example.myapplication.list;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class RssFeedModel implements Parcelable {
+import java.io.Serializable;
+
+public class RssFeedModel implements Serializable {
 
     private String title;
     private String link;
@@ -11,16 +13,7 @@ public class RssFeedModel implements Parcelable {
     private String timestamp;
     private String organization;
     private String location;
-
-    public static final Creator CREATOR = new Creator() {
-        public RssFeedModel createFromParcel(Parcel in) {
-            return new RssFeedModel(in);
-        }
-
-        public RssFeedModel[] newArray(int size) {
-            return new RssFeedModel[size];
-        }
-    };
+    private double latitude, longitude;
 
     public RssFeedModel(String title, String link, String description, String timestamp) {
         this.title = title;
@@ -33,33 +26,13 @@ public class RssFeedModel implements Parcelable {
         }
     }
 
-    public RssFeedModel(String title, String description, String timestamp, String organization, String location, String link) {
+    public RssFeedModel(String title, String description, String timestamp, String organization, String location, double latitude, double longitude, String link) {
         this.title = title;
         this.link = link;
         this.description = description;
         this.timestamp = timestamp;
         this.organization = organization;
         this.location = location;
-    }
-
-    public RssFeedModel(Parcel p){
-        this(p.readString(), p.readString(), p.readString(), p.readString());
-        int loc = description.indexOf("<b>Organization</b>");
-        if (loc != -1){
-            organization = description.substring(loc + 26);
-        }
-    }
-
-    @Override
-    public int describeContents(){
-        return 0;
-    }
-
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(title);
-        dest.writeString(link);
-        dest.writeString(description);
-        dest.writeString(timestamp);
     }
 
     public String getTitle() {
@@ -100,5 +73,21 @@ public class RssFeedModel implements Parcelable {
 
     public void setOrganization(String organization) {
         this.organization = organization;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 }
