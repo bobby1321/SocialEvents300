@@ -3,8 +3,10 @@ package com.example.myapplication.list;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -37,6 +39,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.map.MapFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
@@ -61,10 +64,12 @@ public class ListFragment extends Fragment {
     private SwipeRefreshLayout mSwipeLayout;
     private RecyclerView.LayoutManager recycleManager;
     private final static String KEY = "Key";
-    private boolean filtered;
+    private boolean filtered, fromMain = false;
     private FloatingActionButton fab;
     private ArrayList<String> ORGS = new ArrayList<String>();
     private ArrayList<String> LOCS = new ArrayList<String>();
+
+    private static MapFragment mapFragment = new MapFragment();
 
     private ArrayList<RssFeedModel> mFeedModelList = new ArrayList<RssFeedModel>();
 
@@ -251,24 +256,28 @@ public class ListFragment extends Fragment {
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 response -> {
                     try{
-                        mFeedModelList = new ArrayList<RssFeedModel>();
-                        JSONArray jArray = new JSONArray(response);
-                        for (int i = 0; i < jArray.length(); i++){
-                            JSONObject jOb = jArray.getJSONObject(i);
-                            RssFeedModel temp = new RssFeedModel(
-                                    jOb.getString("title"),
-                                    jOb.getString("description"),
-                                    jOb.getString("timestamp"),
-                                    jOb.getString("organization"),
-                                    jOb.getString("location"),
-                                    Double.parseDouble(jOb.getString("latitude")),
-                                    Double.parseDouble(jOb.getString("longitude")),
-                                    jOb.getString("link")
-                            );
-                            mFeedModelList.add(temp);
+                        if (!fromMain) {
+                            fromMain = false;
+                            mFeedModelList = new ArrayList<RssFeedModel>();
+                            JSONArray jArray = new JSONArray(response);
+                            for (int i = 0; i < jArray.length(); i++) {
+                                JSONObject jOb = jArray.getJSONObject(i);
+                                RssFeedModel temp = new RssFeedModel(
+                                        jOb.getString("title"),
+                                        jOb.getString("description"),
+                                        jOb.getString("timestamp"),
+                                        jOb.getString("organization"),
+                                        jOb.getString("location"),
+                                        jOb.getDouble("latitude"),
+                                        jOb.getDouble("longitude"),
+                                        jOb.getString("link")
+                                );
+                                mFeedModelList.add(temp);
+                                Log.d("Map2", jOb.getString("latitude"));
+                            }
+                            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                            mRecyclerView.setAdapter(feedListAdapter);
                         }
-                        RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                        mRecyclerView.setAdapter(feedListAdapter);
                     } catch (Exception e){
                         Log.d("Error", e.toString());
                     }
@@ -285,10 +294,21 @@ public class ListFragment extends Fragment {
         }
     }
 
+    public void onResume() {
+        try{
+            if (!((MainActivity)getActivity()).getRssFeedModels().equals(null)){
+                mFeedModelList = ((MainActivity)getActivity()).getRssFeedModels();
+                fromMain = true;
+            }
+        } catch (Exception e){
+            Log.d("Error", e.getMessage());
+        }
+        super.onResume();
+    }
+
     public void passTheList(ArrayList<RssFeedModel> list){
-        Bundle bundle = new Bundle();
-        bundle.putString("", mFeedModelList.toString());
-        Log.d("Map", "Bundle");
+        ((MainActivity)getActivity()).setRssFeedModels(list);
+        Log.d("Map", "Set");
     }
 
     public class NoDefaultSpinner extends androidx.appcompat.widget.AppCompatSpinner {
@@ -404,24 +424,28 @@ public class ListFragment extends Fragment {
                         @Override
                         public void onResponse(String response) {
                             try{
-                                JSONArray jboy = new JSONArray(response);
-                                for (int i = 0; i < jboy.length(); i++) {
-                                    JSONObject jOb = jboy.getJSONObject(i);
-                                    RssFeedModel temp = new RssFeedModel(
-                                            jOb.getString("title"),
-                                            jOb.getString("description"),
-                                            jOb.getString("timestamp"),
-                                            jOb.getString("organization"),
-                                            jOb.getString("location"),
-                                            Double.parseDouble(jOb.getString("latitude")),
-                                            Double.parseDouble(jOb.getString("longitude")),
-                                            jOb.getString("link")
-                                    );
-                                    mFeedModelList.add(temp);
-                                    if (!ORGS.contains(jOb.getString("organization"))){
-                                        ORGS.add(jOb.getString("organization"));
-                                    }if (!LOCS.contains(jOb.getString("location"))){
-                                        LOCS.add(jOb.getString("location"));
+                                if (!fromMain) {
+                                    fromMain = false;
+                                    JSONArray jboy = new JSONArray(response);
+                                    for (int i = 0; i < jboy.length(); i++) {
+                                        JSONObject jOb = jboy.getJSONObject(i);
+                                        RssFeedModel temp = new RssFeedModel(
+                                                jOb.getString("title"),
+                                                jOb.getString("description"),
+                                                jOb.getString("timestamp"),
+                                                jOb.getString("organization"),
+                                                jOb.getString("location"),
+                                                jOb.getDouble("latitude"),
+                                                jOb.getDouble("longitude"),
+                                                jOb.getString("link")
+                                        );
+                                        mFeedModelList.add(temp);
+                                        if (!ORGS.contains(jOb.getString("organization"))) {
+                                            ORGS.add(jOb.getString("organization"));
+                                        }
+                                        if (!LOCS.contains(jOb.getString("location"))) {
+                                            LOCS.add(jOb.getString("location"));
+                                        }
                                     }
                                 }
                             } catch (Exception e){

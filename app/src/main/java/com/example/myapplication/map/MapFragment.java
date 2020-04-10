@@ -19,6 +19,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 import com.example.myapplication.list.RssFeedModel;
 import com.google.android.gms.maps.*;
@@ -112,22 +113,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         LatLng tempPoint = new LatLng(lat, lng);
         googleMap.addMarker(new MarkerOptions().position(tempPoint)
                 .title(name));
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(tempPoint));
     }
 
     public void addMarkers(){
         try{
-            Bundle args = getArguments();
-            Log.d("Map", "" + args);
-            rssFeedModels = new ArrayList<RssFeedModel>();
-            //rssFeedModels = (ArrayList<RssFeedModel>)args.getSerializable("key");
+            if(!((MainActivity)getActivity()).getRssFeedModels().equals(null)) {
+                rssFeedModels = ((MainActivity) getActivity()).getRssFeedModels();
+            }
         } catch (Exception e) {
             Log.d("Map", "" + e.getMessage());
             rssFeedModels = new ArrayList<RssFeedModel>();
         }
         for (RssFeedModel r : rssFeedModels){
             addMarker(r.getLatitude(), r.getLongitude(), r.getTitle());
-            Log.d("Map", r.getTitle());
+            Log.d("Map", r.getTitle() + " " + r.getLatitude() + " " + r.getLongitude());
         }
     }
 

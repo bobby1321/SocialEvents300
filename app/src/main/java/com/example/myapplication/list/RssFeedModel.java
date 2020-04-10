@@ -33,6 +33,8 @@ public class RssFeedModel implements Serializable {
         this.timestamp = timestamp;
         this.organization = organization;
         this.location = location;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public String getTitle() {
