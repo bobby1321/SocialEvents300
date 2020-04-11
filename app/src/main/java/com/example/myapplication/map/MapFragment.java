@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.Singleton;
 import com.example.myapplication.list.RssFeedModel;
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.LatLng;
@@ -35,6 +36,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     private GoogleMap googleMap;
     private FloatingActionButton fab;
     private ArrayList<RssFeedModel> rssFeedModels;
+    private boolean mapType = true;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_map, container, false);
@@ -43,7 +45,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         fab.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                openAddMarkerDialogue(root);
+                toggleMapMode(root);
             };
         });
         mapView.onCreate(savedInstanceState);
@@ -62,51 +64,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         googleMap.moveCamera( CameraUpdateFactory.newLatLngZoom(new LatLng(29.189999, -81.048228) , 16.0f) );
     }
 
-    public void openAddMarkerDialogue(View view){
-        final EditText latText = new EditText(getActivity());
-        latText.setRawInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED);
-        latText.setHint("Latitude");
-        final EditText lngText = new EditText(getActivity());
-        lngText.setRawInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED);
-        lngText.setHint("Longitude");
-        final EditText nameText = new EditText(getActivity());
-        nameText.setInputType(InputType.TYPE_CLASS_TEXT);
-        nameText.setHint("Marker Name");
-
-
-        LinearLayout layout = new LinearLayout(getActivity());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.addView(latText);
-        layout.addView(lngText);
-        layout.addView(nameText);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Enter Marker");
-        builder.setView(layout);
-        builder.setPositiveButton("Add", new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                try{
-                    double lat = Double.parseDouble(latText.getText().toString());
-                    double lng = Double.parseDouble(lngText.getText().toString());
-                    addMarker(lat, lng, nameText.getText().toString());
-                } catch (Exception e){
-                    Toast toast = Toast.makeText(getActivity(), "You have failed.", Toast.LENGTH_LONG);
-                    toast.show();
-                }
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                dialog.cancel();
-            }
-        });
-        builder.create().show();
+    public void toggleMapMode(View view){
+        if (mapType){
+            googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        } else if (!mapType){
+            googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        }
+        mapType=!mapType;
     }
 
     public void addMarker(double lat, double lng, String name){
@@ -117,15 +81,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
     public void addMarkers(){
         try{
-            if(!((MainActivity)getActivity()).getRssFeedModels().equals(null)) {
-                rssFeedModels = ((MainActivity) getActivity()).getRssFeedModels();
+            if(!(Singleton.getInstance().getState().equals(null))) {
+                rssFeedModels = Singleton.getInstance().getState();
             }
         } catch (Exception e) {
             Log.d("Map", "" + e.getMessage());
             rssFeedModels = new ArrayList<RssFeedModel>();
         }
         for (RssFeedModel r : rssFeedModels){
-            addMarker(r.getLatitude(), r.getLongitude(), r.getTitle());
+            if(r.getLongitude()!= 0.0 && r.getLatitude() != 0.0){
+                addMarker(r.getLatitude(), r.getLongitude(), r.getTitle());
+            }
             Log.d("Map", r.getTitle() + " " + r.getLatitude() + " " + r.getLongitude());
         }
     }

@@ -18,7 +18,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -31,16 +34,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.android.volley.Request;
+/*import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+import com.android.volley.toolbox.Volley;*/
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.Singleton;
 import com.example.myapplication.map.MapFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import com.squareup.moshi.Types;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -52,9 +59,14 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static java.security.AccessController.getContext;
 
@@ -69,9 +81,12 @@ public class ListFragment extends Fragment {
     private ArrayList<String> ORGS = new ArrayList<String>();
     private ArrayList<String> LOCS = new ArrayList<String>();
 
-    private static MapFragment mapFragment = new MapFragment();
+    private final OkHttpClient client = new OkHttpClient();
+    private final Moshi moshi = new Moshi.Builder().add(new RssFeedModel.RssJsonAdapter()).build();
 
     private ArrayList<RssFeedModel> mFeedModelList = new ArrayList<RssFeedModel>();
+
+    private int timeFromNow = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -95,6 +110,7 @@ public class ListFragment extends Fragment {
                         {
                             new FetchFeedTask().execute((Void) null);
                             filtered = false;
+                            timeFromNow = 0;
                         }
                     });
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
@@ -125,8 +141,7 @@ public class ListFragment extends Fragment {
 
     private void openFilterAction(View root) {
         NoDefaultSpinner spinner = new NoDefaultSpinner(getContext());
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
-                R.array.filter_array, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(), R.array.filter_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setPrompt("Select a filter option...");
@@ -140,7 +155,7 @@ public class ListFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Filter Events");
         builder.setView(layout);
-        builder.setPositiveButton("Filter", new DialogInterface.OnClickListener()
+        DialogInterface.OnClickListener clickListener = new DialogInterface.OnClickListener()
         {
             @Override
             public void onClick(DialogInterface dialog, int which)
@@ -149,23 +164,35 @@ public class ListFragment extends Fragment {
                 Log.d("URL","Help");
                 switch (pos){
                     case -1:{
-                        //fuck you how did you even do that
+                        //how did you even do that
                         Log.d("URL", "Oh poop");
                         break;
                     }
                     case 0:{
-                        FetchQuery(0, ((TextView)views[0]).getText().toString());
+                        new FilteredFetchFeedTask().execute(0, ((TextView)views[0]).getText().toString());
+
                         break;
                     }
                     case 1:{
-                        FetchQuery(1, ((TextView)views[0]).getText().toString());
+                        new FilteredFetchFeedTask().execute(1, ((TextView)views[0]).getText().toString());
                         break;
                     }
-
+                    case 2:{
+                        new FilteredFetchFeedTask().execute(2, timeFromNow);
+                        break;
+                    }
+                    case 3:{
+                        new FilteredFetchFeedTask().execute(3, ((TextView)views[0]).getText().toString());
+                        break;
+                    }
                 }
+                RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                mRecyclerView.setAdapter(feedListAdapter);
+                passTheList(mFeedModelList);
                 filtered = true;
             }
-        });
+        };
+        builder.setPositiveButton("Filter", clickListener);
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
         {
             @Override
@@ -212,7 +239,52 @@ public class ListFragment extends Fragment {
                         break;
                     }
                     case 2:{
-
+                        GridLayout temp = new GridLayout(getContext());
+                        temp.setColumnCount(2);
+                        temp.setRowCount(2);
+                        Button twoButton = new Button(getContext());
+                        twoButton.setText("2 Hours");
+                        twoButton.setWidth((alertDialog.getWindow().getDecorView().getWidth()-128)/2);
+                        twoButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                timeFromNow = 2;
+                            }
+                        });
+                        Button fiveButton = new Button(getContext());
+                        fiveButton.setText("5 Hours");
+                        fiveButton.setWidth((alertDialog.getWindow().getDecorView().getWidth()-128)/2);
+                        fiveButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                timeFromNow = 5;
+                            }
+                        });
+                        Button dayButton = new Button(getContext());
+                        dayButton.setText("1 Day");
+                        dayButton.setWidth((alertDialog.getWindow().getDecorView().getWidth()-128)/2);
+                        dayButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                timeFromNow = 24;
+                            }
+                        });
+                        Button weekButton = new Button(getContext());
+                        weekButton.setText("1 Week");
+                        weekButton.setWidth((alertDialog.getWindow().getDecorView().getWidth()-128)/2);
+                        weekButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                timeFromNow = 168;
+                            }
+                        });
+                        temp.addView(twoButton, 0);
+                        temp.addView(fiveButton, 1);
+                        temp.addView(dayButton, 2);
+                        temp.addView(weekButton, 3);
+                        views[0] = temp;
+                        layout.addView(views[0]);
+                        break;
                     }
                     case 3:{
                         String[] temp = LOCS.toArray(new String[ORGS.size()]);
@@ -221,6 +293,7 @@ public class ListFragment extends Fragment {
                         views[0] = new AutoCompleteTextView(getContext());
                         ((AutoCompleteTextView)views[0]).setAdapter(adapter);
                         layout.addView(views[0]);
+                        break;
                     }
                 }
             }
@@ -232,59 +305,6 @@ public class ListFragment extends Fragment {
         alertDialog.show();
     }
 
-    public void FetchQuery(int type, String param){
-        RequestQueue queue = Volley.newRequestQueue(getContext());
-        String url = "ahhhh";
-        switch (type){
-            case 0:{
-                url ="http://pages.erau.edu/~apelianr/name_search.php?name=" + param;
-                break;
-            }
-            case 1:{
-                url ="http://pages.erau.edu/~apelianr/org_search.php?org=" + param;
-                break;
-            }
-            case 2:{
-
-            }
-            case 3:{
-                url ="http://pages.erau.edu/~apelianr/loc_search.php?loc=" + param;
-                break;
-            }
-        }
-        mFeedModelList.clear();
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                response -> {
-                    try{
-                        if (!fromMain) {
-                            fromMain = false;
-                            mFeedModelList = new ArrayList<RssFeedModel>();
-                            JSONArray jArray = new JSONArray(response);
-                            for (int i = 0; i < jArray.length(); i++) {
-                                JSONObject jOb = jArray.getJSONObject(i);
-                                RssFeedModel temp = new RssFeedModel(
-                                        jOb.getString("title"),
-                                        jOb.getString("description"),
-                                        jOb.getString("timestamp"),
-                                        jOb.getString("organization"),
-                                        jOb.getString("location"),
-                                        jOb.getDouble("latitude"),
-                                        jOb.getDouble("longitude"),
-                                        jOb.getString("link")
-                                );
-                                mFeedModelList.add(temp);
-                                Log.d("Map2", jOb.getString("latitude"));
-                            }
-                            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
-                            mRecyclerView.setAdapter(feedListAdapter);
-                        }
-                    } catch (Exception e){
-                        Log.d("Error", e.toString());
-                    }
-                }, error -> Log.e("Error", error.toString()));
-        passTheList(mFeedModelList);
-        queue.add(stringRequest);
-    }
 
     @Override
     public void onStart(){
@@ -303,13 +323,16 @@ public class ListFragment extends Fragment {
         } catch (Exception e){
             Log.d("Error", e.getMessage());
         }
+        timeFromNow = 0;
         super.onResume();
     }
 
     public void passTheList(ArrayList<RssFeedModel> list){
-        ((MainActivity)getActivity()).setRssFeedModels(list);
+        Singleton.getInstance().setState(list);
         Log.d("Map", "Set");
     }
+
+
 
     public class NoDefaultSpinner extends androidx.appcompat.widget.AppCompatSpinner {
 
@@ -404,7 +427,7 @@ public class ListFragment extends Fragment {
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
-        final RequestQueue queue = Volley.newRequestQueue(getContext());
+        //final RequestQueue queue = Volley.newRequestQueue(getContext());
         final String url ="http://pages.erau.edu/~apelianr/event_array.php";
 
         @Override
@@ -415,11 +438,40 @@ public class ListFragment extends Fragment {
         @Override
         protected Boolean doInBackground(Void... voids) {
             ORGS.clear();
+            LOCS.clear();
             mFeedModelList.clear();
-            if (TextUtils.isEmpty(url))
+            if (TextUtils.isEmpty(url)){
                 return false;
+            }
 
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+            Request request = new Request.Builder().url(url).build();
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                } else if (response.isSuccessful()){
+                    Type type = Types.newParameterizedType(List.class, RssFeedModel.RssJson.class);
+                    JsonAdapter<List<RssFeedModel.RssJson>> adapter = moshi.adapter(type);
+                    List<RssFeedModel.RssJson> list = adapter.fromJson(response.body().source());
+                    for (RssFeedModel.RssJson r : list){
+                        mFeedModelList.add(new RssFeedModel.RssJsonAdapter().RSSFromJson(r));
+                    }
+                    RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                    for (RssFeedModel r : mFeedModelList){
+                        if (!ORGS.contains(r.getOrganization())) {
+                            ORGS.add(r.getOrganization());
+                        }
+                        if (!LOCS.contains(r.getLocation())) {
+                            LOCS.add(r.getLocation());
+                        }
+                    }
+                    passTheList(mFeedModelList);
+                }
+            } catch (IOException e) {
+                Log.d("OkHTTP", e.getMessage());
+                Toast.makeText(getActivity(), R.string.snackbar_text, Toast.LENGTH_SHORT).show();
+            }
+
+            /*StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -462,36 +514,118 @@ public class ListFragment extends Fragment {
             //RSSFeedModelListOrganizer();
             //putArrayListIntoRecyclerView();
             passTheList(mFeedModelList);
-            queue.add(stringRequest);
+            queue.add(stringRequest);*/
             return true;
         }
 
-        /*protected void RSSFeedModelListOrganizer(){
-            ArrayList<RssFeedModel> tempList = new ArrayList<RssFeedModel>();
-            int i = 0;
-            int j=0, k=4;
-            String secondsmark = ":00 ";
-            String temp, timestamp1, timestamp2;
-            char parse1,parse2;
-            while(true) {
-                temp = mFeedModelList.get(i).getTimestamp().substring(j, k);
-                if (temp.equals(secondsmark)) {
-                    timestamp1 = mFeedModelList.get(i).getTimestamp().substring(j - 5, k);
+        protected void putArrayListIntoRecyclerView(){
+            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+            mRecyclerView.setAdapter(feedListAdapter);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            mSwipeLayout.setRefreshing(false);
+
+            if (success) {
+                RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                mRecyclerView.setAdapter(feedListAdapter);
+            } else {
+                Toast.makeText(getActivity(),
+                        "Enter a valid Rss feed url", Toast.LENGTH_LONG).show();
+            }
+        }
+
+    }
+
+    private class FilteredFetchFeedTask extends AsyncTask<Object, Void, Boolean> {
+
+        //final RequestQueue queue = Volley.newRequestQueue(getContext());
+        final String url ="http://pages.erau.edu/~apelianr/event_array.php";
+
+        @Override
+        protected void onPreExecute() {
+            mSwipeLayout.setRefreshing(true);
+        }
+
+        @Override
+        protected Boolean doInBackground(Object... params) {
+
+            if (TextUtils.isEmpty(url)){
+                return false;
+            }
+
+            int searchType = (int)params[0];
+            String param = params[1].toString();
+
+            String url = "ahhhh";
+            switch (searchType){
+                case 0:{
+                    url ="http://pages.erau.edu/~apelianr/name_search.php?name=" + param;
                     break;
-                } else
-                    j++; k++;
+                }
+                case 1:{
+                    url ="http://pages.erau.edu/~apelianr/org_search.php?org=" + param;
+                    break;
+                }
+                case 2:{
+                    url = "http://pages.erau.edu/~apelianr/time_search.php?time=" + param;
+                    break;
+                }
+                case 3:{
+                    url ="http://pages.erau.edu/~apelianr/loc_search.php?loc=" + param;
+                    break;
+                }
             }
-            while(i>0) {
-                timestamp2 = mFeedModelList.get(i-1).getTimestamp().substring(j, k);
-                if(timestamp1.compareTo(timestamp2) > 0)
-                    tempList.add(mFeedModelList.get(i));
-                else
-                    tempList.add(i-1,mFeedModelList.get(i));
-                i--;
+            mFeedModelList.clear();
+            Request request = new Request.Builder().url(url).build();
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                } else if (response.isSuccessful()){
+                    Type type = Types.newParameterizedType(List.class, RssFeedModel.RssJson.class);
+                    JsonAdapter<List<RssFeedModel.RssJson>> adapter = moshi.adapter(type);
+                    List<RssFeedModel.RssJson> list = adapter.fromJson(response.body().source());
+                    for (RssFeedModel.RssJson r : list){
+                        mFeedModelList.add(new RssFeedModel.RssJsonAdapter().RSSFromJson(r));
+                    }
+                                    }
+            } catch (IOException e) {
+                Log.d("OkHTTP", e.getMessage());
             }
-            //orrrr we could have it find the earliest time, add that object, then add the rest behind it
-            mFeedModelList = tempList;
-        }*/
+            /*StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                response -> {
+                    try{
+                        if (!fromMain) {
+                            fromMain = false;
+                            mFeedModelList = new ArrayList<RssFeedModel>();
+                            JSONArray jArray = new JSONArray(response);
+                            for (int i = 0; i < jArray.length(); i++) {
+                                JSONObject jOb = jArray.getJSONObject(i);
+                                RssFeedModel temp = new RssFeedModel(
+                                        jOb.getString("title"),
+                                        jOb.getString("description"),
+                                        jOb.getString("timestamp"),
+                                        jOb.getString("organization"),
+                                        jOb.getString("location"),
+                                        jOb.getDouble("latitude"),
+                                        jOb.getDouble("longitude"),
+                                        jOb.getString("link")
+                                );
+                                mFeedModelList.add(temp);
+                            }
+                            RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);
+                            mRecyclerView.setAdapter(feedListAdapter);
+                        }
+                    } catch (Exception e){
+                        Log.d("Error", e.toString());
+                    }
+                }, error -> Log.e("Error", error.toString()));
+        passTheList(mFeedModelList);
+        queue.add(stringRequest);*/
+
+            return true;
+        }
 
         protected void putArrayListIntoRecyclerView(){
             RssFeedListAdapter feedListAdapter = new RssFeedListAdapter(mFeedModelList);

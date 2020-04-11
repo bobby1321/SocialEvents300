@@ -3,14 +3,19 @@ package com.example.myapplication.list;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.squareup.moshi.FromJson;
+
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class RssFeedModel implements Serializable {
 
     private String title;
     private String link;
     private String description;
-    private String timestamp;
+    private Date timestamp;
     private String organization;
     private String location;
     private double latitude, longitude;
@@ -19,7 +24,11 @@ public class RssFeedModel implements Serializable {
         this.title = title;
         this.link = link;
         this.description = description;
-        this.timestamp = timestamp;
+        try {
+            this.timestamp = new SimpleDateFormat("EEE, MMM dd hh:mm:ss zzz yyyy").parse(timestamp);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         int loc = description.indexOf("<b>Organization</b>");
         if (loc != -1){
             organization = description.substring(loc + 26);
@@ -30,7 +39,11 @@ public class RssFeedModel implements Serializable {
         this.title = title;
         this.link = link;
         this.description = description;
-        this.timestamp = timestamp;
+        try {
+            this.timestamp = new SimpleDateFormat("EEE, MMM dd hh:mm:ss zzz yyyy").parse(timestamp);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         this.organization = organization;
         this.location = location;
         this.latitude = latitude;
@@ -61,12 +74,16 @@ public class RssFeedModel implements Serializable {
         this.description = description;
     }
 
-    public String getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+        try {
+            this.timestamp = new SimpleDateFormat("EEE, MMM dd hh:mm:ss zzz yyyy").parse(timestamp);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getOrganization() {
@@ -91,5 +108,35 @@ public class RssFeedModel implements Serializable {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public static class RssJson{
+        String title, link, description, timestamp, organization, location, latitude, longitude;
+    }
+
+    public static class RssJsonAdapter{
+        @FromJson RssFeedModel RSSFromJson(RssJson rssJson){
+            double latitude, longitude;
+            latitude = Double.parseDouble(rssJson.latitude);
+            longitude = Double.parseDouble(rssJson.longitude);
+            return new RssFeedModel(
+                    rssJson.title,
+                    rssJson.description,
+                    rssJson.timestamp,
+                    rssJson.organization,
+                    rssJson.location,
+                    latitude,
+                    longitude,
+                    rssJson.link
+                    );
+        }
     }
 }
