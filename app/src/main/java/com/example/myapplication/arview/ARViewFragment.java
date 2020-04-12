@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.example.myapplication.R;
+import com.example.myapplication.Singleton;
+import com.example.myapplication.list.RssFeedModel;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Plane;
 import com.google.ar.core.Session;
@@ -23,6 +25,7 @@ import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -41,6 +44,7 @@ public class ARViewFragment extends Fragment {
     private ViewRenderable exampleLayoutRenderable;
     private Toast loadingMessageToast = null;
     private boolean installRequested;
+    private ArrayList<LocationMarker> locationMarkers = new ArrayList<>();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -115,14 +119,26 @@ public class ARViewFragment extends Fragment {
                                     }
                                 });
                                 // Adding the marker
-                                locationScene.mLocationMarkers.add(layoutLocationMarker);
+
+                                //locationScene.mLocationMarkers.add(layoutLocationMarker);
 
                                 // Adding a simple location marker of a 3D model
                                 locationScene.mLocationMarkers.add(
                                         new LocationMarker(
                                                 40.049341,
                                                 -75.531120,
-                                                getAndy()));
+                                                getAndy("The OG Andy")));
+
+                                locationMarkers.clear();
+                                for (RssFeedModel r : Singleton.getInstance().getState()){
+                                    LocationMarker temp = new LocationMarker(
+                                            r.getLongitude(),
+                                            r.getLatitude(),
+                                            getAndy(r.getTitle()));
+                                    temp.setScaleAtDistance(true);
+                                    locationMarkers.add(temp);
+                                    locationScene.mLocationMarkers.add(temp);
+                                }
                             }
 
                             Frame frame = arSceneView.getArFrame();
@@ -158,7 +174,7 @@ public class ARViewFragment extends Fragment {
         View eView = exampleLayoutRenderable.getView();
         eView.setOnTouchListener((v, event) -> {
             Toast.makeText(
-                    c, "Location marker touched.", Toast.LENGTH_LONG)
+                    c, "Location marker touched.", Toast.LENGTH_SHORT)
                     .show();
             return false;
         });
@@ -166,13 +182,13 @@ public class ARViewFragment extends Fragment {
         return base;
     }
 
-    private Node getAndy() {
+    private Node getAndy(String touchText) {
         Node base = new Node();
         base.setRenderable(andyRenderable);
         Context c = getContext();
         base.setOnTapListener((v, event) -> {
             Toast.makeText(
-                    c, "Andy touched.", Toast.LENGTH_LONG)
+                    c, touchText, Toast.LENGTH_SHORT)
                     .show();
         });
         return base;
