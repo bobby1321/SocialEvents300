@@ -40,7 +40,7 @@ public class RssFeedModel implements Serializable {
         this.link = link;
         this.description = description;
         try {
-            this.timestamp = new SimpleDateFormat("EEE, MMM dd hh:mm:ss zzz yyyy").parse(timestamp);
+            this.timestamp = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(timestamp);
         } catch (ParseException e) {
             e.printStackTrace();
         }

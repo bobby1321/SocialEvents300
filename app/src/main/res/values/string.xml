@@ -5,4 +5,5 @@
     <string name="title_list">List</string>
     <string name="snackbar_text">Sorry, we\'re having some trouble connecting to the server. Please pull down to refresh, or check your internet connection.</string>
     <string name="filter_snackbar_text">"Please select a filter option</string>
+    <string name="plane_finding">Searching for surfaces&#8230;</string>
 </resources>
