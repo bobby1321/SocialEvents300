@@ -5,10 +5,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.example.myapplication.arview.ARViewFragment;
-import com.example.myapplication.list.ListFragment;
-import com.example.myapplication.list.RssFeedModel;
-import com.example.myapplication.map.MapFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,12 +15,8 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import java.util.ArrayList;
-
-
 public class MainActivity extends AppCompatActivity{
 
-    private ArrayList<RssFeedModel> rssFeedModels;
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 69;
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 420;
 
@@ -54,13 +46,4 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    public ArrayList<RssFeedModel> getRssFeedModels() {
-        Log.d("Map3", "Get");
-        return rssFeedModels;
-    }
-
-    public void setRssFeedModels(ArrayList<RssFeedModel> rssFeedModels) {
-        this.rssFeedModels = rssFeedModels;
-        Log.d("Map3", "Set");
-    }
 }

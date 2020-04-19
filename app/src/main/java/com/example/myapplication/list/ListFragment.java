@@ -3,15 +3,12 @@ package com.example.myapplication.list;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +18,6 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
-import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -29,38 +25,25 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-/*import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;*/
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 import com.example.myapplication.Singleton;
-import com.example.myapplication.map.MapFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,15 +51,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static java.security.AccessController.getContext;
-
 public class ListFragment extends Fragment {
 
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeLayout;
     private RecyclerView.LayoutManager recycleManager;
-    private final static String KEY = "Key";
-    private boolean filtered, fromMain = false;
+    private boolean filtered = false;
     private FloatingActionButton fab;
     private ArrayList<String> ORGS = new ArrayList<String>();
     private ArrayList<String> LOCS = new ArrayList<String>();
@@ -239,6 +219,7 @@ public class ListFragment extends Fragment {
                         break;
                     }
                     case 2:{
+                        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
                         GridLayout temp = new GridLayout(getContext());
                         temp.setColumnCount(2);
                         temp.setRowCount(2);
@@ -249,6 +230,7 @@ public class ListFragment extends Fragment {
                             @Override
                             public void onClick(View v) {
                                 timeFromNow = 2;
+                                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                             }
                         });
                         Button fiveButton = new Button(getContext());
@@ -258,6 +240,7 @@ public class ListFragment extends Fragment {
                             @Override
                             public void onClick(View v) {
                                 timeFromNow = 5;
+                                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                             }
                         });
                         Button dayButton = new Button(getContext());
@@ -267,6 +250,7 @@ public class ListFragment extends Fragment {
                             @Override
                             public void onClick(View v) {
                                 timeFromNow = 24;
+                                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                             }
                         });
                         Button weekButton = new Button(getContext());
@@ -276,6 +260,7 @@ public class ListFragment extends Fragment {
                             @Override
                             public void onClick(View v) {
                                 timeFromNow = 168;
+                                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                             }
                         });
                         temp.addView(twoButton, 0);
@@ -315,14 +300,6 @@ public class ListFragment extends Fragment {
     }
 
     public void onResume() {
-        try{
-            if (!((MainActivity)getActivity()).getRssFeedModels().equals(null)){
-                mFeedModelList = ((MainActivity)getActivity()).getRssFeedModels();
-                fromMain = true;
-            }
-        } catch (Exception e){
-            Log.d("Error", e.getMessage());
-        }
         timeFromNow = 0;
         super.onResume();
     }

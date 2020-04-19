@@ -1,0 +1,42 @@
+{
+  materials: [
+    {
+      name: '213,28,24',
+      parameters: [
+        {
+          baseColor: null,
+        },
+        {
+          baseColorTint: [
+            0.83529399999999998,
+            0.109804,
+            0.094117999999999993,
+            1,
+          ],
+        },
+        {
+          metallic: 0,
+        },
+        {
+          roughness: 1,
+        },
+        {
+          opacity: null,
+        },
+      ],
+      source: 'build/sceneform_sdk/default_materials/obj_material.sfm',
+    },
+  ],
+  model: {
+    attributes: [
+      'Position',
+      'TexCoord',
+      'Orientation',
+    ],
+    collision: {},
+    file: 'sampledata/Marker.obj',
+    name: 'Marker',
+    recenter: 'root',
+  },
+  version: '0.54:2',
+}

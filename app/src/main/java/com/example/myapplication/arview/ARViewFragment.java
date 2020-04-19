@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import com.example.myapplication.R;
 import com.example.myapplication.Singleton;
 import com.example.myapplication.list.RssFeedModel;
+
 import com.google.ar.core.Frame;
 import com.google.ar.core.Plane;
 import com.google.ar.core.Session;
@@ -52,31 +53,21 @@ public class ARViewFragment extends Fragment {
         arSceneView = root.findViewById(R.id.ar_scene_view);
 
         // Build a renderable from a 2D View.
-        CompletableFuture<ViewRenderable> exampleLayout =
-                ViewRenderable.builder()
-                        .setView(getContext(), R.layout.example_layout)
-                        .build();
         CompletableFuture<ModelRenderable> andy = ModelRenderable.builder()
-                .setSource(getContext(), R.raw.andy)
+                .setSource(getContext(), R.raw.marker)
                 .build();
 
 
         CompletableFuture.allOf(
-                exampleLayout,
                 andy)
                 .handle(
                         (notUsed, throwable) -> {
-                            // When you build a Renderable, Sceneform loads its resources in the background while
-                            // returning a CompletableFuture. Call handle(), thenAccept(), or check isDone()
-                            // before calling get().
-
                             if (throwable != null) {
                                 DemoUtils.displayError(getContext(), "Unable to load renderables", throwable);
                                 return null;
                             }
 
                             try {
-                                exampleLayoutRenderable = exampleLayout.get();
                                 andyRenderable = andy.get();
                                 hasFinishedLoading = true;
 
@@ -96,34 +87,7 @@ public class ARViewFragment extends Fragment {
                             }
 
                             if (locationScene == null) {
-                                // If our locationScene object hasn't been setup yet, this is a good time to do it
-                                // We know that here, the AR components have been initiated.
-                                locationScene = new LocationScene(getActivity(), getActivity(), arSceneView);
-
-                                // Now lets create our location markers.
-                                // First, a layout
-                                LocationMarker layoutLocationMarker = new LocationMarker(
-                                        40.049341,
-                                        -75.531120,
-                                        getExampleView()
-                                );
-
-                                // An example "onRender" event, called every frame
-                                // Updates the layout with the markers distance
-                                layoutLocationMarker.setRenderEvent(new LocationNodeRender() {
-                                    @Override
-                                    public void render(LocationNode node) {
-                                        View eView = exampleLayoutRenderable.getView();
-                                        TextView distanceTextView = eView.findViewById(R.id.textView2);
-                                        distanceTextView.setText(node.getDistance() + "M");
-                                    }
-                                });
-                                // Adding the marker
-
-                                //locationScene.mLocationMarkers.add(layoutLocationMarker);
-
-                                // Adding a simple location marker of a 3D model
-                                locationScene.mLocationMarkers.add(
+                                                                locationScene.mLocationMarkers.add(
                                         new LocationMarker(
                                                 40.049341,
                                                 -75.531120,
@@ -164,22 +128,6 @@ public class ARViewFragment extends Fragment {
                         });
 
         return root;
-    }
-
-    private Node getExampleView() {
-        Node base = new Node();
-        base.setRenderable(exampleLayoutRenderable);
-        Context c = getContext();
-        // Add  listeners etc here
-        View eView = exampleLayoutRenderable.getView();
-        eView.setOnTouchListener((v, event) -> {
-            Toast.makeText(
-                    c, "Location marker touched.", Toast.LENGTH_SHORT)
-                    .show();
-            return false;
-        });
-
-        return base;
     }
 
     private Node getAndy(String touchText) {
@@ -225,7 +173,6 @@ public class ARViewFragment extends Fragment {
             getActivity().getSupportFragmentManager().beginTransaction().remove(this).commit();
             return;
         }
-
         if (arSceneView.getSession() != null) {
             showLoadingMessage();
         }
@@ -237,11 +184,9 @@ public class ARViewFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-
         if (locationScene != null) {
             locationScene.pause();
         }
-
         arSceneView.pause();
     }
 
