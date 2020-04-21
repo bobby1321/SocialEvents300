@@ -91,7 +91,7 @@ public class ARViewFragment extends Fragment {
                                         new LocationMarker(
                                                 40.049341,
                                                 -75.531120,
-                                                getAndy("The OG Andy")));
+                                                getAndy("The Test Marker")));
 
                                 locationMarkers.clear();
                                 for (RssFeedModel r : Singleton.getInstance().getState()){
