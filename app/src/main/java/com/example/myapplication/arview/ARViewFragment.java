@@ -54,7 +54,7 @@ public class ARViewFragment extends Fragment {
 
         // Build a renderable from a 2D View.
         CompletableFuture<ModelRenderable> andy = ModelRenderable.builder()
-                .setSource(getContext(), R.raw.marker)
+                .setSource(getContext(), R.raw.andy)
                 .build();
 
 
@@ -87,10 +87,13 @@ public class ARViewFragment extends Fragment {
                             }
 
                             if (locationScene == null) {
-                                                                locationScene.mLocationMarkers.add(
+
+                                locationScene = new LocationScene(getActivity(), getActivity(), arSceneView);
+
+                                locationScene.mLocationMarkers.add(
                                         new LocationMarker(
-                                                40.049341,
-                                                -75.531120,
+                                                40.049647,
+                                                -75.531594,
                                                 getAndy("The Test Marker")));
 
                                 locationMarkers.clear();
